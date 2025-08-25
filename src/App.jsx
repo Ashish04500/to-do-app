@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-
 function App() {
   const [tasks, setTasks] = useState(() => {
     const saved = localStorage.getItem("tasks");
@@ -11,28 +10,38 @@ function App() {
   const [input, setInput] = useState("");
   const [filter, setFilter] = useState("all");
 
-  // 🔹 For editing
+  // Editing
   const [editingIndex, setEditingIndex] = useState(null);
-  const [editingText, setEditingText] = useState("");
 
-  // 🔹 Theme state
+  // Theme state
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem("theme") === "dark";
   });
 
-  // Save tasks to localStorage
+  // Save tasks
   useEffect(() => {
     localStorage.setItem("tasks", JSON.stringify(tasks));
   }, [tasks]);
 
-  // Save theme to localStorage
+  // Save theme
   useEffect(() => {
     localStorage.setItem("theme", darkMode ? "dark" : "light");
   }, [darkMode]);
 
-  const addTask = () => {
+  // Add or Save
+  const handleAddOrSave = () => {
     if (input.trim() === "") return;
-    setTasks([...tasks, { text: input, completed: false }]);
+
+    if (editingIndex !== null) {
+      // Save changes
+      const updatedTasks = [...tasks];
+      updatedTasks[editingIndex].text = input;
+      setTasks(updatedTasks);
+      setEditingIndex(null);
+    } else {
+      // Add new
+      setTasks([...tasks, { text: input, completed: false }]);
+    }
     setInput("");
   };
 
@@ -46,15 +55,6 @@ function App() {
     setTasks(tasks.filter((_, i) => i !== index));
   };
 
-  const saveTask = (index) => {
-    if (editingText.trim() === "") return;
-    const newTasks = [...tasks];
-    newTasks[index].text = editingText;
-    setTasks(newTasks);
-    setEditingIndex(null);
-    setEditingText("");
-  };
-
   const filteredTasks = tasks.filter((task) => {
     if (filter === "active") return !task.completed;
     if (filter === "completed") return task.completed;
@@ -62,129 +62,127 @@ function App() {
   });
 
   return (
-    <div
-  className={`min-h-screen p-6 transition-colors duration-500
-    ${darkMode
-      ? "bg-gradient-to-br from-gray-950 via-gray-900 to-black text-white"
-      : "bg-gradient-to-br from-indigo-50 via-white to-pink-50 text-gray-900"
-    }`}
->
-      <div className="max-w-md mx-auto bg-white dark:bg-gray-600 shadow-lg rounded-lg p-4">
-        
-        {/* 🔹 Header with Toggle */}
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-bold">✅ To-Do App</h1>
-          <button
+    <motion.div
+      initial={false}
+      animate={{
+        backgroundColor: darkMode ? "#000000" : "#f9fafb",
+      }}
+      transition={{ duration: 0.5 }}
+      className={`min-h-screen p-6 ${
+        darkMode ? "text-white" : "text-gray-900"
+      }`}
+    >
+      <div className="max-w-md mx-auto bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-6">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-extrabold bg-gradient-to-r from-blue-500 to-pink-500 bg-clip-text text-transparent">
+            ✅ To-Do App
+          </h1>
+          <motion.button
             onClick={() => setDarkMode(!darkMode)}
-            className="px-3 py-1 rounded bg-gray-300 dark:gray-600"
+            whileTap={{ scale: 0.9, rotate: 360 }}
+            transition={{ type: "spring", stiffness: 200, damping: 10 }}
+            className="px-3 py-1 rounded-lg bg-gray-300 dark:bg-gray-600 hover:scale-105 transition"
           >
             {darkMode ? "🌞 Light" : "🌙 Dark"}
-          </button>
+          </motion.button>
         </div>
 
         {/* Input */}
-        <div className="flex mb-4">
+        <div className="flex mb-6">
           <input
             type="text"
             placeholder="Add a new task..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            className="flex-1 p-2 border rounded-l bg-gray-50 dark:bg-gray-700"
+            className="flex-1 p-3 border rounded-l-lg bg-gray-50 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-400"
           />
           <button
-            onClick={addTask}
-            className="px-4 bg-blue-500 text-white rounded-r"
+            onClick={handleAddOrSave}
+            className="px-6 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-r-lg hover:opacity-90 transition"
           >
-            Add
+            {editingIndex !== null ? "Save" : "Add"}
           </button>
         </div>
 
         {/* Filters */}
-        <div className="flex justify-around mb-4">
-          <button
-            onClick={() => setFilter("all")}
-            className={filter === "all" ? "font-bold text-blue-500" : ""}
-          >
-            All
-          </button>
-          <button
-            onClick={() => setFilter("active")}
-            className={filter === "active" ? "font-bold text-blue-500" : ""}
-          >
-            Active
-          </button>
-          <button
-            onClick={() => setFilter("completed")}
-            className={filter === "completed" ? "font-bold text-blue-500" : ""}
-          >
-            Completed
-          </button>
+        <div className="flex justify-center gap-3 mb-6">
+          {["all", "active", "completed"].map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-4 py-1 rounded-full text-sm font-medium transition ${
+                filter === f
+                  ? "bg-blue-500 text-white shadow"
+                  : "bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500"
+              }`}
+            >
+              {f.charAt(0).toUpperCase() + f.slice(1)}
+            </button>
+          ))}
         </div>
 
         {/* Task List */}
-        <ul className="space-y-2">
-  <AnimatePresence>
-    {filteredTasks.map((task, index) => (
-      <motion.li
-        key={index}
-        initial={{ opacity: 0, y: 20 }}   // when entering
-        animate={{ opacity: 1, y: 0 }}    // after mounted
-        exit={{ opacity: 0, y: -20 }}     // when removed
-        transition={{ duration: 0.3 }}
-        className="flex items-center justify-between bg-gray-200 dark:bg-gray-700 p-2 rounded"
-      >
-        {/* ✅ keep all your li content here */}
-        <input
-          type="checkbox"
-          checked={task.completed}
-          onChange={() => toggleTask(index)}
-          className="mr-2"
-        />
+        <ul className="space-y-3">
+          <AnimatePresence>
+            {filteredTasks.map((task, index) => (
+              <motion.li
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ type: "spring", stiffness: 100, damping: 12 }}
+                className="flex items-center justify-between bg-gray-200 dark:bg-gray-700 p-3 rounded-lg shadow-sm hover:shadow-md transition"
+              >
+                {/* Checkbox */}
+                <input
+                  type="checkbox"
+                  checked={task.completed}
+                  onChange={() => toggleTask(index)}
+                  className="mr-3 h-5 w-5"
+                />
 
-        {editingIndex === index ? (
-          <input
-            type="text"
-            value={editingText}
-            onChange={(e) => setEditingText(e.target.value)}
-            onBlur={() => saveTask(index)}
-            onKeyDown={(e) => e.key === "Enter" && saveTask(index)}
-            className="flex-1 p-1 border rounded"
-            autoFocus
-          />
-        ) : (
-          <span
-            className="flex-1"
-            style={{
-              textDecoration: task.completed ? "line-through" : "none",
-            }}
-          >
-            {task.text}
-          </span>
-        )}
+                {/* Task Text */}
+                <span
+                  className="flex-1"
+                  style={{
+                    textDecoration: task.completed ? "line-through" : "none",
+                  }}
+                >
+                  {task.text}
+                </span>
 
-        <button
-          onClick={() => {
-            setEditingIndex(index);
-            setEditingText(task.text);
-          }}
-          className="ml-2 text-blue-500 hover:text-blue-700"
-        >
-          ✏️
-        </button>
+                {/* Edit Button */}
+                <button
+                  onClick={() => {
+                    if (editingIndex === index) {
+                      // cancel editing
+                      setEditingIndex(null);
+                      setInput("");
+                    } else {
+                      // start editing
+                      setEditingIndex(index);
+                      setInput(task.text);
+                    }
+                  }}
+                  className="ml-2 px-2 py-1 rounded bg-yellow-400 text-black hover:bg-yellow-500 transition"
+                >
+                  ✏️
+                </button>
 
-        <button
-          onClick={() => deleteTask(index)}
-          className="ml-2 text-red-500 hover:text-red-700"
-        >
-          ❌
-        </button>
-      </motion.li>
-    ))}
-  </AnimatePresence>
-</ul>
-
+                {/* Delete Button */}
+                <button
+                  onClick={() => deleteTask(index)}
+                  className="ml-2 px-2 py-1 rounded bg-red-500 text-white hover:bg-red-600 transition"
+                >
+                  ❌
+                </button>
+              </motion.li>
+            ))}
+          </AnimatePresence>
+        </ul>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
