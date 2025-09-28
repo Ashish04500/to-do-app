@@ -1,7 +1,8 @@
-"homepage": "https://ashish04500.github.io/to-Do-App",
+
 {
   "name": "to-do-app",
   "private": true,
+  "homepage": "https://ashish04500.github.io/to-Do-App",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
