@@ -1,3 +1,4 @@
+"homepage": "https://ashish04500.github.io/To-Do-App",
 {
   "name": "to-do-app",
   "private": true,
@@ -8,6 +9,9 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
+    "predeploy": "npm run build",
+     "deploy": "gh-pages -d build",
+
   },
   "dependencies": {
     "framer-motion": "^12.23.12",
